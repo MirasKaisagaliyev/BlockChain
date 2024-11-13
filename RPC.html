@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock-Paper-Scissors Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .choices button { padding: 10px 20px; margin: 5px; }
+        .history { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Rock-Paper-Scissors Game</h1>
+    <div class="choices">
+        <button id="rock">Rock</button>
+        <button id="paper">Paper</button>
+        <button id="scissors">Scissors</button>
+    </div>
+    
+    <h2>Game History</h2>
+    <ul id="game-history"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script>
+        const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
+        const contractAddress = "0x7220d11debb8c0bd4ab428ec4aaccce6a303a757";  // Адрес контракта
+        const contractABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "_choice",
+				"type": "uint8"
+			}
+		],
+		"name": "play",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "playerOneChoice",
+				"type": "uint8"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "playerTwoChoice",
+				"type": "uint8"
+			}
+		],
+		"name": "determineWinner",
+		"outputs": [
+			{
+				"internalType": "enum RockPaperScissors.GameResult",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "games",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "playerOne",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "playerTwo",
+				"type": "address"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "playerOneChoice",
+				"type": "uint8"
+			},
+			{
+				"internalType": "enum RockPaperScissors.Choice",
+				"name": "playerTwoChoice",
+				"type": "uint8"
+			},
+			{
+				"internalType": "enum RockPaperScissors.GameResult",
+				"name": "result",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getGameHistory",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "playerOne",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "playerTwo",
+						"type": "address"
+					},
+					{
+						"internalType": "enum RockPaperScissors.Choice",
+						"name": "playerOneChoice",
+						"type": "uint8"
+					},
+					{
+						"internalType": "enum RockPaperScissors.Choice",
+						"name": "playerTwoChoice",
+						"type": "uint8"
+					},
+					{
+						"internalType": "enum RockPaperScissors.GameResult",
+						"name": "result",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct RockPaperScissors.Game[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+        
+        let accounts;
+
+        async function init() {
+            accounts = await web3.eth.requestAccounts();
+            loadGameHistory();
+        }
+
+        async function play(choice) {
+            const result = await contract.methods.play(choice).send({ from: accounts[0] });
+            console.log(result);
+            loadGameHistory();
+        }
+
+        async function loadGameHistory() {
+            const games = await contract.methods.getGameHistory().call();
+            const historyList = document.getElementById("game-history");
+            historyList.innerHTML = "";
+            games.forEach((game, index) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `Game ${index + 1}: Player 1 chose ${game.playerOneChoice}, Player 2 chose ${game.playerTwoChoice}. Result: ${game.result}`;
+                historyList.appendChild(listItem);
+            });
+        }
+
+        document.getElementById("rock").onclick = () => play(1);  // 1 = Rock
+        document.getElementById("paper").onclick = () => play(2); // 2 = Paper
+        document.getElementById("scissors").onclick = () => play(3); // 3 = Scissors
+
+        window.onload = init;
+    </script>
+</body>
+</html>
